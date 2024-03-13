@@ -6,11 +6,17 @@ authors = ["Dzmitry Pranchuk <d.pranchuk@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
-torch = "^2.2.1"
-pytorch3d = "^0.7.4"
+python = "~3.9.18"
 fire = "^0.6.0"
 tqdm = "^4.66.2"
+torch = "^2.2.1"
+open3d = "^0.18.0"
+trimesh = "^4.2.0"
+scikit-learn = "^1.4.1.post1"
+addict = "^2.4.0"
+pandas = "^2.2.1"
+pyvista = "^0.43.4"
+rtree = "^1.2.0"
 
 
 [build-system]
