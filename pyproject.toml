@@ -17,6 +17,9 @@ addict = "^2.4.0"
 pandas = "^2.2.1"
 pyvista = "^0.43.4"
 rtree = "^1.2.0"
+taichi = "1.6.0"
+pysdf = "^0.1.9"
+scikit-image = "^0.22.0"
 
 
 [build-system]
