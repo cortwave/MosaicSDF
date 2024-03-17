@@ -45,8 +45,7 @@ def calculate_weights(X, centers, scales) -> torch.Tensor:
 @ti.func
 def get_corners(x: ti.float32) -> ti.Vector:
     c0 = ti.cast(ti.floor(x), ti.i32)
-    if c0 == KERNEL_SIZE - 1:
-        c0 -= 1
+    c0 = tm.clamp(c0, 0, KERNEL_SIZE - 2)
     c1 = c0 + 1
     return ti.Vector([c0, c1])
 
@@ -108,7 +107,7 @@ def interpolate_values(values: torch.Tensor, distances: torch.Tensor, p: float =
     :param p: the power for the interpolation
     :return: the interpolated values, shape (N, M)
     """
-    distances = torch.clamp(distances, min=1e-9)
+    distances = torch.clamp(distances, min=1e-5)
     weights = 1 / torch.pow(distances, p)
     weights = weights / weights.sum(dim=2, keepdim=True)
     return (values * weights).sum(dim=2)
@@ -143,12 +142,11 @@ def msdf_at_point(X, centers, scales, Vi) -> torch.Tensor:
     return weighted_values
 
 
-def calculate_msdf_value(scale: float, points: np.ndarray, mesh: trimesh.Trimesh) -> torch.Tensor:
-    grid = get_grid().cpu().numpy()
-    grid_flat = grid.reshape(-1, 3)
-    all_points = points.reshape(points.shape[0], 1, 3) + grid_flat * scale
+def calculate_msdf_value(scale: float, points: torch.Tensor, mesh: trimesh.Trimesh) -> torch.Tensor:
+    all_points = get_grid_points(points, scale)
     n_points, n_grids, _ = all_points.shape
     f = SDF(mesh.vertices, mesh.faces)
+    all_points = all_points.detach().cpu().numpy()
     sdf_values = f(all_points.reshape(-1, 3)).reshape(n_points, n_grids)
     return torch.tensor(sdf_values, device=DEVICE)
 
@@ -172,24 +170,46 @@ def sample_volume(bounds, resolution, bound_delata=0.1):
     return points
 
 
-def reconstruct_mesh(Vi, scales, centers, resolution=128, threshold=0.0, batch_size: int = 10000) -> trimesh.Trimesh:
-    grid = sample_volume(((-1, 1), (-1, 1), (-1, 1)), resolution).view(-1, 3)
-    sdf_results = torch.zeros(grid.size(0), device=DEVICE)
-    for i in tqdm(range(0, grid.size(0), batch_size)):
-        end_idx = min(i + batch_size, grid.size(0))
-        batch = grid[i:end_idx]
-        sdf_results[i:end_idx] = msdf_at_point(batch, centers, scales, Vi)
-    sdf_values = sdf_results.view(resolution, resolution, resolution).cpu().numpy()
-    voxel_grid = sdf_values < threshold
-    verts, faces, _, _ = marching_cubes(voxel_grid, level=0.0)
+def get_grid_points(centers, scales, kernel_size=KERNEL_SIZE):
+    grid = get_grid(kernel_size=kernel_size)
+    grid_flat = grid.reshape(-1, 3)
+    if isinstance(scales, torch.Tensor):
+        scales = scales.view(-1, 1, 1)
+    all_points = centers.reshape(centers.shape[0], 1, 3) + grid_flat.view(1, -1, 3) * scales
+    return all_points
+
+
+@ti.kernel
+def sparse_sdf_to_grid(points: ti.types.ndarray(), sdf: ti.types.ndarray(), grid: ti.types.ndarray(), grid_counts: ti.types.ndarray(),
+                       grid_start: ti.float32, grid_end: ti.float32, grid_res: ti.int32):
+    for i in range(points.shape[0]):
+        x, y, z = points[i, 0], points[i, 1], points[i, 2]
+        x = (x - grid_start) / (grid_end - grid_start) * grid_res
+        y = (y - grid_start) / (grid_end - grid_start) * grid_res
+        z = (z - grid_start) / (grid_end - grid_start) * grid_res
+        cx = ti.cast(tm.floor(x), ti.i32)
+        cy = ti.cast(tm.floor(y), ti.i32)
+        cz = ti.cast(tm.floor(z), ti.i32)
+        grid[cx, cy, cz] = sdf[i] + grid[cx, cy, cz]
+        grid_counts[cx, cy, cz] = grid_counts[cx, cy, cz] + 1
+
+    for i, j, k in grid:
+        if grid_counts[i, j, k] != 0:
+            grid[i, j, k] /= grid_counts[i, j, k]
+
+
+def reconstruct_mesh(Vi, scales, centers, resolution=128, threshold=0.0, batch_size: int = 3000) -> trimesh.Trimesh:
+    points = get_grid_points(centers, scales).view(-1, 3)
+    sdf_results = Vi
+    sdf_results = sdf_results.view(-1)
+
+    grid = torch.zeros(resolution, resolution, resolution, device=DEVICE, dtype=torch.float32)
+    grid_counts = torch.zeros(resolution, resolution, resolution, device=DEVICE, dtype=torch.int32)
+
+    sparse_sdf_to_grid(points, sdf_results, grid, grid_counts, -1.1, 1.1, resolution)
+    grid_sdf = grid.detach().cpu().numpy()
+
+    grid_sdf = grid_sdf <= threshold
+    verts, faces, _, _ = marching_cubes(grid_sdf, level=0.0)
     mesh = trimesh.Trimesh(vertices=verts, faces=faces)
     return mesh
-
-
-if __name__ == '__main__':
-    ti.init(arch=ti.gpu)
-    X = torch.rand(10, 3, device=DEVICE)
-    centers = torch.rand(20, 3, device=DEVICE)
-    scales = torch.rand(20, device=DEVICE)
-    Vi = torch.rand(20, KERNEL_SIZE, KERNEL_SIZE, KERNEL_SIZE, device=DEVICE)
-    msdf_values = msdf_at_point(X, centers, scales, Vi)
