@@ -38,7 +38,7 @@ def calculate_weights(X, centers, scales) -> torch.Tensor:
     distances = torch.abs((X.view(-1, 1, 3) - centers.view(1, -1, 3)) / scales.view(1, -1, 1))
     max_norm = torch.max(distances, dim=2).values
     weights = torch.nn.functional.relu(1 - max_norm)  # N, M
-    norm_weights = weights / weights.sum(dim=1, keepdim=True)
+    norm_weights = weights / (weights.sum(dim=1, keepdim=True) + 1e-5)
     return norm_weights
 
 
@@ -136,7 +136,6 @@ def msdf_at_point(X, centers, scales, Vi) -> torch.Tensor:
     distances = torch.norm(distances, dim=-1)
 
     values_at_corners = get_values_at_indices(Vi, indices)
-
     values = interpolate_values(values_at_corners, distances)
     weighted_values = (values * weights).sum(dim=1)
     return weighted_values
@@ -179,8 +178,12 @@ def get_grid_points(centers, scales, kernel_size=KERNEL_SIZE):
     return all_points
 
 
+INTERP_KERNEL_SIZE = 3
+
+
 @ti.kernel
-def sparse_sdf_to_grid(points: ti.types.ndarray(), sdf: ti.types.ndarray(), grid: ti.types.ndarray(), grid_counts: ti.types.ndarray(),
+def sparse_sdf_to_grid(points: ti.types.ndarray(), sdf: ti.types.ndarray(), grid: ti.types.ndarray(),
+                       grid_counts: ti.types.ndarray(),
                        grid_start: ti.float32, grid_end: ti.float32, grid_res: ti.int32):
     for i in range(points.shape[0]):
         x, y, z = points[i, 0], points[i, 1], points[i, 2]
@@ -190,15 +193,19 @@ def sparse_sdf_to_grid(points: ti.types.ndarray(), sdf: ti.types.ndarray(), grid
         cx = ti.cast(tm.floor(x), ti.i32)
         cy = ti.cast(tm.floor(y), ti.i32)
         cz = ti.cast(tm.floor(z), ti.i32)
-        grid[cx, cy, cz] = sdf[i] + grid[cx, cy, cz]
-        grid_counts[cx, cy, cz] = grid_counts[cx, cy, cz] + 1
+        for rx in ti.static(range(-INTERP_KERNEL_SIZE, INTERP_KERNEL_SIZE + 1)):
+            for ry in ti.static(range(-INTERP_KERNEL_SIZE, INTERP_KERNEL_SIZE + 1)):
+                for rz in ti.static(range(-INTERP_KERNEL_SIZE, INTERP_KERNEL_SIZE + 1)):
+                    if cx + rx >= 0 and cx + rx < grid_res and cy + ry >= 0 and cy + ry < grid_res and cz + rz >= 0 and cz + rz < grid_res:
+                        grid[cx + rx, cy + ry, cz + rz] += sdf[i]
+                        grid_counts[cx + rx, cy + ry, cz + rz] += 1
 
     for i, j, k in grid:
         if grid_counts[i, j, k] != 0:
             grid[i, j, k] /= grid_counts[i, j, k]
 
 
-def reconstruct_mesh(Vi, scales, centers, resolution=128, threshold=0.0, batch_size: int = 3000) -> trimesh.Trimesh:
+def reconstruct_mesh(Vi, scales, centers, resolution=256, threshold=0.0) -> trimesh.Trimesh:
     points = get_grid_points(centers, scales).view(-1, 3)
     sdf_results = Vi
     sdf_results = sdf_results.view(-1)
