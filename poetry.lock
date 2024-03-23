@@ -518,6 +518,16 @@ ssh = ["paramiko"]
 tqdm = ["tqdm"]
 
 [[package]]
+name = "gputil"
+version = "1.4.0"
+description = "GPUtil is a Python module for getting the GPU status from NVIDA GPUs using nvidia-smi."
+optional = false
+python-versions = "*"
+files = [
+    {file = "GPUtil-1.4.0.tar.gz", hash = "sha256:099e52c65e512cdfa8c8763fca67f5a5c2afb63469602d5dcb4d296b3661efb9"},
+]
+
+[[package]]
 name = "idna"
 version = "3.6"
 description = "Internationalized Domain Names in Applications (IDNA)"
@@ -818,6 +828,24 @@ files = [
 [package.extras]
 lint = ["pre-commit (>=3.3)"]
 test = ["pytest (>=7.4)", "pytest-cov (>=4.1)"]
+
+[[package]]
+name = "loguru"
+version = "0.7.2"
+description = "Python logging made (stupidly) simple"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "loguru-0.7.2-py3-none-any.whl", hash = "sha256:003d71e3d3ed35f0f8984898359d65b79e5b21943f78af86aa5491210429b8eb"},
+    {file = "loguru-0.7.2.tar.gz", hash = "sha256:e671a53522515f34fd406340ee968cb9ecafbc4b36c679da03c18fd8d0bd51ac"},
+]
+
+[package.dependencies]
+colorama = {version = ">=0.3.4", markers = "sys_platform == \"win32\""}
+win32-setctime = {version = ">=1.0.0", markers = "sys_platform == \"win32\""}
+
+[package.extras]
+dev = ["Sphinx (==7.2.5)", "colorama (==0.4.5)", "colorama (==0.4.6)", "exceptiongroup (==1.1.3)", "freezegun (==1.1.0)", "freezegun (==1.2.2)", "mypy (==v0.910)", "mypy (==v0.971)", "mypy (==v1.4.1)", "mypy (==v1.5.1)", "pre-commit (==3.4.0)", "pytest (==6.1.2)", "pytest (==7.4.0)", "pytest-cov (==2.12.1)", "pytest-cov (==4.1.0)", "pytest-mypy-plugins (==1.9.3)", "pytest-mypy-plugins (==3.0.0)", "sphinx-autobuild (==2021.3.14)", "sphinx-rtd-theme (==1.3.0)", "tox (==3.27.1)", "tox (==4.11.0)"]
 
 [[package]]
 name = "markdown-it-py"
@@ -1227,6 +1255,29 @@ files = [
 ]
 
 [[package]]
+name = "objaverse"
+version = "0.1.7"
+description = "Objaverse is an open dataset with over 10 million 3D objects"
+optional = false
+python-versions = "*"
+files = [
+    {file = "objaverse-0.1.7-py3-none-any.whl", hash = "sha256:7396d119efde5794d0e87d3ca03047d0b0585b2a83ea381a8cc2ddc219d6f1a3"},
+    {file = "objaverse-0.1.7.tar.gz", hash = "sha256:2e65205bd4e27ef72803fc9cda3225e7ebdf1dc2a829bcd983b682a85617bf94"},
+]
+
+[package.dependencies]
+fsspec = ">=2022.11.0"
+gputil = "1.4.0"
+loguru = "*"
+pandas = "*"
+pyarrow = "*"
+requests = "*"
+tqdm = "*"
+
+[package.extras]
+s3 = ["s3fs (==0.4.2)"]
+
+[[package]]
 name = "open3d"
 version = "0.18.0"
 description = "Open3D: A Modern Library for 3D Data Processing."
@@ -1456,6 +1507,46 @@ files = [
 [package.dependencies]
 packaging = "*"
 tenacity = ">=6.2.0"
+
+[[package]]
+name = "point-cloud-utils"
+version = "0.30.4"
+description = "A Python library for common tasks on 3D point clouds and meshes"
+optional = false
+python-versions = "*"
+files = [
+    {file = "point-cloud-utils-0.30.4.tar.gz", hash = "sha256:c8c3876578a9905e4c59865add32bca170ef35a40cacfaabe13d2d91d7fe8653"},
+    {file = "point_cloud_utils-0.30.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:02be4d3de5077e02b987778baa3ac9d948241dde1e19be684adf4f343dc92e5f"},
+    {file = "point_cloud_utils-0.30.4-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:8c94a91c377e3dbc501d7639cf41577d29089696451aa5faf9c21242573355f3"},
+    {file = "point_cloud_utils-0.30.4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:7dc78e7fb917d04ed26f7a5d1f435414b8ec8252fd41e62d839926f599776096"},
+    {file = "point_cloud_utils-0.30.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:dfc0c8a36a3dc3cae1c0d7de62ef37e13572e60ce6e6222fac6071969dc48c64"},
+    {file = "point_cloud_utils-0.30.4-cp310-cp310-win_amd64.whl", hash = "sha256:ae271edbca13b6d5ff5ccc61cdc19181cdc4133858f995dce297d8c068af1294"},
+    {file = "point_cloud_utils-0.30.4-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:e894042de2e9a9184187721f59fe6e7eb0297af22cb9ac69f063d85d911ba2e2"},
+    {file = "point_cloud_utils-0.30.4-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:e46569cde20df3adf94db5dd75f752c14a5ebc4e8fe08a806c20b786707b6758"},
+    {file = "point_cloud_utils-0.30.4-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ef5dc6238f469f34f47a7151d203b2516825c72a4b4ffed588604f3c2cb0f1b0"},
+    {file = "point_cloud_utils-0.30.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7fc97401e7049ae1e2a50a22195d46ff68269f5facb0eff20eadd46785cbb243"},
+    {file = "point_cloud_utils-0.30.4-cp311-cp311-win_amd64.whl", hash = "sha256:2de1b68f97a37dd9155423bf2f2d8566890734649355b968ac6e7c2e8c4e46c7"},
+    {file = "point_cloud_utils-0.30.4-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:d801bfdfbe393a834c42ac31a442bfb06a14295a7731f4efc913cc8d3b064c4e"},
+    {file = "point_cloud_utils-0.30.4-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2dd4ec943310da0b1324d809ff79fcac8c21fe7c5deb21143c309d703291058a"},
+    {file = "point_cloud_utils-0.30.4-cp36-cp36m-win_amd64.whl", hash = "sha256:7287203e10792b31ea7a96ce989ee3e36a2a7cdf9730a9f0b9da6a6f941ed435"},
+    {file = "point_cloud_utils-0.30.4-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:7949c55b4b58bc147127d7c15290dfd72138f8bc4a3208507ee2f2f7fde83241"},
+    {file = "point_cloud_utils-0.30.4-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:73fae2f4825ab75478e580b088630e808edd835203227bcb51ef809d6282e49d"},
+    {file = "point_cloud_utils-0.30.4-cp37-cp37m-win_amd64.whl", hash = "sha256:e4412747f4af9b3232a238591e19b8df2e7d7262e1ff1b012411ad0c2cf56d72"},
+    {file = "point_cloud_utils-0.30.4-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:74d8055215af7cd0c48050ae781de750dd9bc2269a011f2598dd650d2946661f"},
+    {file = "point_cloud_utils-0.30.4-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:806a2c7d954110b8c2e8a24d61e420c6fbd7815661137ee3eb9bf1e781bfb158"},
+    {file = "point_cloud_utils-0.30.4-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:48ea10d280d14bbfc8d18c5e41293683d469507306295e09e277fd36b12d05fd"},
+    {file = "point_cloud_utils-0.30.4-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:32e04793cfe78c1f6e4a9d69b8adb4733d1b0177363c9b550495eb02287e3eae"},
+    {file = "point_cloud_utils-0.30.4-cp38-cp38-win_amd64.whl", hash = "sha256:ef02ccbac6e7a0ad9ed5bca0513c211ab0efab0258e187896f052ef2f513ce66"},
+    {file = "point_cloud_utils-0.30.4-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:f9cb1bcbb370b5cfafe3f91af508f5e0c697cf9ebd0a4fe16715e7049387d5eb"},
+    {file = "point_cloud_utils-0.30.4-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:0903c112fb0a34451d720fbcb62a12f16e6700575d04b15e3a8c67a5a87c775a"},
+    {file = "point_cloud_utils-0.30.4-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:773527c85d2037c8361c86a732cc63695aea6027def4b4e0408bddee048d6d42"},
+    {file = "point_cloud_utils-0.30.4-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1e7c8db6a095ef158e1ddefddb8dade92b1042f84a9b77d2b2c0bf759e6f5672"},
+    {file = "point_cloud_utils-0.30.4-cp39-cp39-win_amd64.whl", hash = "sha256:b66ad8e3c0052adce4c03b0e977037aa4ab9a26479dc35616fcfc11dacf2226e"},
+]
+
+[package.dependencies]
+numpy = "*"
+scipy = "*"
 
 [[package]]
 name = "pooch"
@@ -2372,6 +2463,20 @@ MarkupSafe = ">=2.1.1"
 watchdog = ["watchdog (>=2.3)"]
 
 [[package]]
+name = "win32-setctime"
+version = "1.1.0"
+description = "A small Python utility to set file creation time on Windows"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "win32_setctime-1.1.0-py3-none-any.whl", hash = "sha256:231db239e959c2fe7eb1d7dc129f11172354f98361c4fa2d6d2d7e278baa8aad"},
+    {file = "win32_setctime-1.1.0.tar.gz", hash = "sha256:15cf5750465118d6929ae4de4eb46e8edae9a5634350c01ba582df868e932cb2"},
+]
+
+[package.extras]
+dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
+
+[[package]]
 name = "zipp"
 version = "3.18.0"
 description = "Backport of pathlib-compatible object wrapper for zip files"
@@ -2389,4 +2494,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9.18"
-content-hash = "8c9dab9190830bd0b6e26ce6b69033a1fa6641f41be15784c4cf77f14dfae545"
+content-hash = "914bed3b9f64610332879d460d26d5e3631717a8fd00b9cb5145e105a85f047e"

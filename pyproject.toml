@@ -21,6 +21,8 @@ taichi = "1.6.0"
 pysdf = "^0.1.9"
 scikit-image = "^0.22.0"
 rerun-sdk = "^0.14.1"
+objaverse = "^0.1.7"
+point-cloud-utils = "^0.30.4"
 
 
 [build-system]

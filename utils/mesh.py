@@ -1,7 +1,7 @@
 import trimesh
-from trimesh import Trimesh
+from trimesh import Trimesh, Scene
 import numpy as np
-import open3d as o3d
+import point_cloud_utils as pcu
 
 
 def normalize_mesh(mesh: Trimesh) -> Trimesh:
@@ -20,6 +20,13 @@ def normalize_mesh(mesh: Trimesh) -> Trimesh:
 
 def load_mesh(file_path: str) -> Trimesh:
     mesh = trimesh.load(file_path, process=False)
+    if isinstance(mesh, Scene):
+        scene = mesh
+        meshes = []
+        for name, val in scene.geometry.items():
+            meshes.append(val)
+        mesh = trimesh.util.concatenate(meshes)
+
     mesh = normalize_mesh(mesh)
     return mesh
 
@@ -30,17 +37,7 @@ def farthest_point_sampling(points, num_samples):
     points: numpy array of shape (N, 3)
     num_samples: the number of points to sample
     """
-    N = points.shape[0]
-    distances = np.full(N, np.inf)
-    sampled_indices = np.zeros(num_samples, dtype=int)
-    # Randomly choose the first point
-    sampled_indices[0] = np.random.randint(N)
-
-    for i in range(1, num_samples):
-        # Update the distances based on the last added point
-        dist = np.sum((points - points[sampled_indices[i - 1]]) ** 2, axis=1)
-        distances = np.minimum(distances, dist)
-        # Choose the point with the maximum distance
-        sampled_indices[i] = np.argmax(distances)
-
+    sampled_indices = pcu.downsample_point_cloud_poisson_disk(points, radius=0.01, target_num_samples=int(num_samples * 1.2))
+    replace = len(sampled_indices) < num_samples
+    sampled_indices = np.random.choice(sampled_indices, num_samples, replace=replace)
     return points[sampled_indices]
