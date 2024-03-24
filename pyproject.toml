@@ -23,6 +23,8 @@ scikit-image = "^0.22.0"
 rerun-sdk = "^0.14.1"
 objaverse = "^0.1.7"
 point-cloud-utils = "^0.30.4"
+pytorch-lightning = "^2.2.1"
+tensorboard = "^2.16.2"
 
 
 [build-system]

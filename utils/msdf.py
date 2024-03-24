@@ -171,7 +171,7 @@ def sample_volume(bounds, resolution, bound_delata=0.1):
 
 def get_grid_points(centers, scales, kernel_size=KERNEL_SIZE):
     grid = get_grid(kernel_size=kernel_size)
-    grid_flat = grid.reshape(-1, 3)
+    grid_flat = grid.reshape(-1, 3).to(centers.device)
     if isinstance(scales, torch.Tensor):
         scales = scales.view(-1, 1, 1)
     all_points = centers.reshape(centers.shape[0], 1, 3) + grid_flat.view(1, -1, 3) * scales
