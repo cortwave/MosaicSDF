@@ -12,14 +12,15 @@ class VAETrainer(pl.LightningModule):
         super().__init__()
         self.model = MSDFVAE(representation_shape=repr_shape)
 
-    def _separate_sdf_points_scale(self, x):
-        return x[..., :-4], x[..., -4:-1], x[..., -1]
+    @staticmethod
+    def separate_sdf_points_scale(x):
+        return x[..., :-4].contiguous(), x[..., -4:-1].contiguous(), x[..., -1].contiguous()
 
     def forward(self, batch, reduction="mean"):
         x = batch["msdf"]
         x_hat, kl_div = self.model(x)
-        sdf, points, scale = self._separate_sdf_points_scale(x)
-        x_hat_sdf, x_hat_points, x_hat_scale = self._separate_sdf_points_scale(x_hat)
+        sdf, points, scale = self.separate_sdf_points_scale(x)
+        x_hat_sdf, x_hat_points, x_hat_scale = self.separate_sdf_points_scale(x_hat)
 
         sdf_mse = torch.nn.functional.mse_loss(x_hat_sdf, sdf, reduction=reduction)
         points_mse = torch.nn.functional.mse_loss(x_hat_points, points, reduction=reduction)
@@ -47,13 +48,12 @@ class VAETrainer(pl.LightningModule):
                       logger=True)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=3e-4)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10, factor=0.5)
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=3e-4)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100, eta_min=1e-7)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "monitor": "val/loss",
             },
         }
 
@@ -69,7 +69,8 @@ def main(data_path: str):
         monitor="val/loss",
         mode="min",
     )
-    trainer = pl.Trainer(max_epochs=10, logger=logger, callbacks=[checkpoints], accelerator='gpu')
+    lr_logger = pl.callbacks.LearningRateMonitor(logging_interval='epoch')
+    trainer = pl.Trainer(max_epochs=10, logger=logger, callbacks=[checkpoints, lr_logger], accelerator='gpu')
     trainer.fit(training_module, data_module)
 
 

@@ -18,6 +18,9 @@ class MsdfDataset(Dataset):
     def __len__(self):
         return len(self.samples)
 
+    def rescale(self, x):
+        return x * self.std.to(x.device) + self.mean.to(x.device)
+
     def __getitem__(self, idx):
         sample = self.samples[idx]
         msdf_representation = torch.load(sample)
