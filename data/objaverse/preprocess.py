@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import objaverse.xl as oxl
-import taichi
 
 from tqdm import tqdm
 from scripts.optimize_msdf import optimize_msdf
@@ -39,11 +38,10 @@ if __name__ == '__main__':
     annotations = oxl.get_alignment_annotations(download_dir=CACHE_DIR)
     output_path = Path('msdf_embeddings')
     output_path.mkdir(exist_ok=True)
-    taichi.init(arch=taichi.gpu)
 
     sketch_df = annotations[annotations['source'] == 'sketchfab']
     bs = 100
-    start_index = 20000
+    start_index = 0
     for i in tqdm(range(start_index, len(sketch_df), bs)):
         end = min(i + bs, len(sketch_df))
         process(sketch_df[i:end])
