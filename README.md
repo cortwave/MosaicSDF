@@ -3,14 +3,15 @@
 This is an unofficial implementation of the MosaicSDF representation from the paper ["Mosaic-SDF for 3D Generative Models
 "](https://lioryariv.github.io/msdf/)
 
-This code  contains functions for `mesh -> msdf` and `msdf -> mesh` conversion. 
-MSDF representation is a set of grids cubic grids parametrized by grid center and scale. Each grid cell contains a signed distance value. For more detailed explanation please read paper.
+The code includes functions for `mesh -> msdf` and `msdf -> mesh` conversion. The MSDF representation consists of a set of cubic grids parameterized by their center and scale. Each grid cell contains a signed distance value. For a more detailed explanation, please refer to the paper.
+
+
 
 ## MSDF representation cons
 
 MSDF is a constant size representation for 3D shapes, so it can be easily used for training ML models (especially generative ones).
 
-Representation shape is `N x (K**3 + 3 + 1)` where `N` - number of grids (1024 in paper and this repo),  `K` - grid size (7 in paper and this repo), `3` - grid center, `1` - grid scale. So with default params mesh can be represented as `1024x347` tensor.
+The representation's shape is `N x (K**3 + 3 + 1)`, where `N` is the number of grids (1024 in the paper and this repository), `K` is the grid size (7 in the paper and this repository), `3` accounts for the grid center, and `1` for the grid scale. Therefore, with the default parameters, a mesh can be represented as a `1024x347` tensor.
 
 ## Installation
 
@@ -34,9 +35,9 @@ Mesh after optimization ![optimized](assets/images/optimized.png)
 
 ### Speed
 
-However I tried to make it fast, mesh reconstruction from msdf representation is still slow such as we need to calculate aggregation of all grid cells for each point in the grids. Maybe it can be optimized by calculation aggregation of obly top-K nearest grids.
+Despite efforts to enhance performance, mesh reconstruction from the MSDF representation remains slow, as it requires calculating the aggregation of all grid cells for each point within the grids. Optimization may be possible by focusing on the aggregation of only the top-K nearest grids.
 
 ### Optimization
 
-The big chance that something is wrong with my optimization, it doesn't converge and optimized mesh looks in the same way as non-optimized.
+There is a significant likelihood that there are issues with my optimization approach; it fails to converge, resulting in the optimized mesh appearing similar to the non-optimized version.
 
