@@ -39,5 +39,5 @@ Despite efforts to enhance performance, mesh reconstruction from the MSDF repres
 
 ### Optimization
 
-There is a significant likelihood that there are issues with my optimization approach; it fails to converge, resulting in the optimized mesh appearing similar to the non-optimized version.
+Optimized mesh appearing similar to the non-optimized version.
 

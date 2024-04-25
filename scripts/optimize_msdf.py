@@ -42,7 +42,7 @@ class MSDFOptimizer(torch.nn.Module):
                  centers: torch.Tensor,
                  scales: torch.Tensor,
                  mesh: trimesh.Trimesh,
-                 n_steps: int = 1000):
+                 n_steps: int = 100):
         super().__init__()
         self.Vi = torch.nn.Parameter(Vi, requires_grad=True)
         self.centers = torch.nn.Parameter(centers, requires_grad=True)
@@ -50,7 +50,7 @@ class MSDFOptimizer(torch.nn.Module):
         self.sdf = SDF(mesh.vertices, mesh.faces)
         self.mesh = mesh
         self.n_steps = n_steps
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)
+        self.optimizer = torch.optim.AdamW(self.parameters(), lr=1e-4)
 
     def _sample_mesh(self, surface_points_count=2048, vicinities_count=2048):
         points = self.mesh.vertices
@@ -63,9 +63,9 @@ class MSDFOptimizer(torch.nn.Module):
         surface = points[indices_surface]
         surface_normals = normals[indices_surface]
         surface_normals = surface_normals / np.linalg.norm(surface_normals, axis=1)[:, None]
-        offsets = np.random.normal(0, 0.1, vicinities_count)
-        vicinities = points[indices_vicinities] + normals[indices_vicinities] * offsets[:, None]
-        vicinities_sdf = self.sdf(vicinities)
+        offsets = np.random.randn(vicinities_count, 3) * 0.1
+        vicinities = points[indices_vicinities] + offsets
+        vicinities_sdf = -self.sdf(vicinities)
         surface, surface_normals, vicinities, vicinities_sdf = map(
             lambda x: torch.from_numpy(x).to(DEVICE).float(), (surface, surface_normals, vicinities, vicinities_sdf))
         return surface, surface_normals, vicinities, vicinities_sdf
@@ -75,28 +75,30 @@ class MSDFOptimizer(torch.nn.Module):
 
         surface, surface_normals, vicinities, vicinities_sdf = self._sample_mesh()
 
-        surface = torch.nn.Parameter(surface.clone(), requires_grad=True)
         surface_pred = msdf_at_point(surface, self.centers, self.scales, self.Vi)
         vicinities_pred = msdf_at_point(vicinities, self.centers, self.scales, self.Vi)
 
         surface_loss = surface_pred.abs().mean()
         vicinitties_loss = (vicinities_pred - vicinities_sdf).abs().mean()
 
-        gradient = torch.autograd.grad(outputs=surface_pred, inputs=surface, grad_outputs=torch.ones_like(surface_pred),
-                                       create_graph=True, retain_graph=True, only_inputs=True)[0]
+        surface.requires_grad_(True)
+        sdf = msdf_at_point(surface, self.centers, self.scales, self.Vi)
+        gradient = torch.autograd.grad(sdf.sum(), surface, create_graph=True)[0]
+        surface.requires_grad_(False)
 
         gradient_loss = (surface_normals - gradient).abs().mean()
+        loss = surface_loss * 50 + vicinitties_loss + gradient_loss
 
-        loss = surface_loss + vicinitties_loss + 0.1 * gradient_loss
-
+        loss.backward()
         self.optimizer.step()
-        return loss.item()
+        losses_text = f'surface_loss: {surface_loss.item():.5f}, vicinitties_loss: {vicinitties_loss.item():.5f}, gradient_loss: {gradient_loss.item():.5f}'
+        return loss.item(), losses_text
 
     def optimize(self):
         loop = tqdm(range(self.n_steps))
         for _ in loop:
-            loss = self.optimizer_step()
-            loop.set_description(f'loss: {loss:.5f}')
+            loss, losses_text = self.optimizer_step()
+            loop.set_description(losses_text)
 
 
 def chamfer_distance(mesh1: trimesh.Trimesh, mesh2: trimesh.Trimesh) -> float:
@@ -156,7 +158,8 @@ def optimize_msdf(input_path: str = 'assets/octopus/model.obj',
     msdf_values = initial_msdf_values.view(-1, KERNEL_SIZE ** 3).to(DEVICE)
 
     if with_optimization:
-        optimizer = MSDFOptimizer(msdf_values.view(-1, KERNEL_SIZE, KERNEL_SIZE, KERNEL_SIZE), sampled_points, scales,
+        optimizer = MSDFOptimizer(msdf_values.view(-1, KERNEL_SIZE, KERNEL_SIZE, KERNEL_SIZE).clone(),
+                                  sampled_points.clone(), scales.clone(),
                                   mesh)
         optimizer.optimize()
         optimized_msdf_values = optimizer.Vi.detach().cpu()

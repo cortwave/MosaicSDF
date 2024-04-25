@@ -175,8 +175,7 @@ def reconstruct_mesh(Vi, scales, centers, resolution=16, threshold=0.0) -> trime
     grid_sdf = msdf_at_point_batched(grid, centers, scales, Vi)
     grid_sdf = grid_sdf.detach().cpu().numpy().reshape(resolution, resolution, resolution)
 
-    grid_sdf = grid_sdf < threshold
-    verts, faces, _, _ = marching_cubes(grid_sdf, level=0.0)
+    verts, faces, _, _ = marching_cubes(-grid_sdf, level=threshold)
     mesh = trimesh.Trimesh(vertices=verts, faces=faces)
     return mesh
 
@@ -186,7 +185,6 @@ def reconstruct_from_sdf(sdf, resolution):
     grid_sdf = sdf(grid)
     grid_sdf = grid_sdf.reshape(resolution, resolution, resolution)
 
-    grid_sdf = grid_sdf > 0
     verts, faces, _, _ = marching_cubes(grid_sdf, level=0.0)
     mesh = trimesh.Trimesh(vertices=verts, faces=faces)
     return mesh
