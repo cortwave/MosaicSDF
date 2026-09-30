@@ -122,7 +122,8 @@ def msdf_at_point(X, centers, scales, Vi) -> torch.Tensor:
     values = (values_at_corners * weights).sum(dim=-1)
     weights = calculate_weights(X[inside_cube], centers, scales)
     weighted_values = (values * weights).sum(dim=1).float()
-    result[inside_cube] = weighted_values
+    scatter_idx = inside_cube.nonzero(as_tuple=True)[0]
+    result = result.scatter(0, scatter_idx, weighted_values)
     return result
 
 
